@@ -62,13 +62,14 @@ fun MainScreen(
 
     LaunchedEffect(state.tutorialStep) {
         if (state.isTutorialMode) {
-            // Give a 1-second delay before scrolling to let user perceive layout change
-            kotlinx.coroutines.delay(1000)
+            // Give a short delay before scrolling to let user perceive layout change
+            kotlinx.coroutines.delay(600)
             when (state.tutorialStep) {
-                1 -> listState.animateScrollToItem(1) // FleetCardSection
-                15 -> listState.animateScrollToItem(8) // Playback section
-                3 -> listState.animateScrollToItem(1) // FleetCardSection
-                4 -> listState.animateScrollToItem(5) // Population Gauge
+                1 -> listState.animateScrollToItem(1)   // FleetCardSection (buy ships)
+                15 -> listState.animateScrollToItem(8)  // Playback section (press play)
+                20 -> listState.animateScrollToItem(7)  // Chart (focus on graph while running)
+                2 -> listState.animateScrollToItem(7)   // Chart (year-end buy prompt)
+                3 -> listState.animateScrollToItem(7)   // Chart (crash notification)
             }
         }
     }
@@ -251,8 +252,8 @@ fun MainScreen(
                 )
             }
 
-            // Year end summary pause overlay card
-            if (state.isYearEndPaused) {
+            // Year end summary pause overlay card (suppress during tutorial — step 2 covers it)
+            if (state.isYearEndPaused && !state.isTutorialMode) {
                 val year = state.currentTick / 12
                 YearEndSummaryPopup(
                     year = year,
@@ -298,18 +299,24 @@ fun MainScreen(
                 )
             }
 
-            // Scripted tutorial wizard overlay (Steps index 1 to 5)
+            // Scripted tutorial wizard overlay
             if (state.isTutorialMode && state.tutorialStep > 0) {
                 TutorialOverlay(
                     step = state.tutorialStep,
+                    currentTick = state.currentTick,
                     onAdvance = { viewModel.advanceTutorialStep() },
-                    onSubmitMentorText = { text ->
+                    onSubmitMentorText = { _ ->
                         viewModel.advanceTutorialStep()
                     },
                     onTutorialAction = { step ->
                         when(step) {
                             1 -> viewModel.buyShips(viewModel.MAX_FLEET)
                             15 -> viewModel.startPlaying()
+                            2 -> {
+                                // Year-end: buy max ships then resume simulation
+                                viewModel.buyShips(viewModel.MAX_FLEET)
+                                viewModel.startPlaying()
+                            }
                         }
                     }
                 )
