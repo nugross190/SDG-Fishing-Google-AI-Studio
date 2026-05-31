@@ -195,11 +195,11 @@ class SimulationViewModel(application: Application) : AndroidViewModel(applicati
     fun startPlaying() {
         val state = _uiState.value
         if (state.isRunning) return
-        
-        if (state.isTutorialMode && state.tutorialStep == 15) {
-            _uiState.update { it.copy(tutorialStep = 2) }
+
+        if (state.isTutorialMode && (state.tutorialStep == 15 || state.tutorialStep == 2)) {
+            _uiState.update { it.copy(tutorialStep = 20) }
         }
-        
+
         _uiState.update { it.copy(isRunning = true, isYearEndPaused = false) }
         simJob = viewModelScope.launch(Dispatchers.Default) {
             while (_uiState.value.isRunning) {
@@ -462,7 +462,17 @@ class SimulationViewModel(application: Application) : AndroidViewModel(applicati
             endSimulationRun()
         } else if (nextTick % 12 == 0 && state.forceYearPause) {
             pausePlaying()
-            _uiState.update { it.copy(isYearEndPaused = true) }
+            // Re-read live state — checkTutorialStoryProgress may already have switched to step 3 (crash).
+            val liveStep = _uiState.value.tutorialStep
+            if (state.isTutorialMode) {
+                if (liveStep == 20) {
+                    // Show tutorial year-end prompt (buy max ships) instead of standard summary
+                    _uiState.update { it.copy(tutorialStep = 2) }
+                }
+                // Otherwise (step 3 already fired this tick), leave the tutorial step alone.
+            } else {
+                _uiState.update { it.copy(isYearEndPaused = true) }
+            }
         }
     }
 
@@ -680,9 +690,9 @@ class SimulationViewModel(application: Application) : AndroidViewModel(applicati
             state.copy(
                 isTutorialMode = true,
                 tutorialStep = 1,
-                fleet = 4,
-                peakFleet = 4,
-                portBudget = SHIP_COST * 20,
+                fleet = 0,
+                peakFleet = 0,
+                portBudget = 550_000_000.0,
                 isRunning = false,
                 forceYearPause = true
             )
@@ -692,31 +702,40 @@ class SimulationViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun checkTutorialStoryProgress() {
         val state = _uiState.value
-        val popRatio = state.currentN / state.K
+        if (state.tutorialStep != 20) return
 
-        if (state.tutorialStep == 20 && popRatio < 0.70) {
+        val popRatio = if (state.K > 0) state.currentN / state.K else 0.0
+        val peakN = state.popHistory.maxOrNull() ?: state.K
+        val dropFromPeak = if (peakN > 0) 1.0 - state.currentN / peakN else 0.0
+
+        val significantCrash = dropFromPeak >= 0.10 || popRatio < 0.50
+
+        if (significantCrash) {
             pausePlaying()
             _uiState.update { it.copy(tutorialStep = 3) }
-        } else if ((state.tutorialStep == 3 || state.tutorialStep == 20 || state.tutorialStep == 21) && state.lastNetProfit < 0.0) {
-            pausePlaying()
-            _uiState.update { it.copy(tutorialStep = 4) }
         }
     }
 
     fun advanceTutorialStep() {
         val step = _uiState.value.tutorialStep
-        if (step == 2) {
-            _uiState.update { it.copy(tutorialStep = 20) }
-        } else if (step == 3) {
-            _uiState.update { it.copy(tutorialStep = 21, isRunning = true) }
-            startPlaying()
-        } else if (step == 4) {
-            // Transition to mentor dialogue
-            _uiState.update { it.copy(tutorialStep = 5) }
-        } else if (step == 5) {
-            // Complete tutorial and unlock sandbox
-            _uiState.update { it.copy(isTutorialMode = false, tutorialStep = 0) }
-            resetSimulation()
+        when (step) {
+            3 -> {
+                // From crash notification → reflection puzzle
+                _uiState.update { it.copy(tutorialStep = 4) }
+            }
+            4 -> {
+                // Transition to mentor dialogue
+                _uiState.update { it.copy(tutorialStep = 5) }
+            }
+            5 -> {
+                // Transition to final mission explanation
+                _uiState.update { it.copy(tutorialStep = 6) }
+            }
+            6 -> {
+                // Complete tutorial and unlock sandbox
+                _uiState.update { it.copy(isTutorialMode = false, tutorialStep = 0) }
+                resetSimulation()
+            }
         }
     }
 
