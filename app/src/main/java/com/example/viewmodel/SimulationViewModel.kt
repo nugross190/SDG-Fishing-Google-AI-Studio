@@ -329,7 +329,9 @@ class SimulationViewModel(application: Application) : AndroidViewModel(applicati
                 "popPct" to (current.currentN / current.K * 100.0).toInt(),
                 "cumProfit" to current.cumulativeProfit.toInt()
             )
-            val newTutorialStep = if (isTutorialStep1 && updatedFleet > 15) 15 else current.tutorialStep
+            val remainingBudget = current.portBudget - cost
+            val canBuyMore = remainingBudget >= SHIP_COST && updatedFleet < MAX_FLEET
+            val newTutorialStep = if (isTutorialStep1 && !canBuyMore) 15 else current.tutorialStep
             current.copy(
                 fleet = updatedFleet,
                 portBudget = current.portBudget - cost,
@@ -680,6 +682,7 @@ class SimulationViewModel(application: Application) : AndroidViewModel(applicati
                 tutorialStep = 1,
                 fleet = 4,
                 peakFleet = 4,
+                portBudget = SHIP_COST * 20,
                 isRunning = false,
                 forceYearPause = true
             )

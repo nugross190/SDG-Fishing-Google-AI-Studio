@@ -308,9 +308,8 @@ fun MainScreen(
                     },
                     onTutorialAction = { step ->
                         when(step) {
-                            1 -> viewModel.buyShips(5)
+                            1 -> viewModel.buyShips(viewModel.MAX_FLEET)
                             15 -> viewModel.startPlaying()
-                            3 -> viewModel.buyShips(15) // Not used anymore but keep for safety
                         }
                     }
                 )
