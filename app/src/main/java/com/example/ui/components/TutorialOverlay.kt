@@ -52,7 +52,7 @@ fun TutorialOverlay(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("🧑‍✈️ KEPALA NELAYAN", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4338CA))
-                        Text("Selamat datang, Manajer! Pelabuhan masih sepi. Langkah pertama: Beli kapal sebanyak mungkin! Terus tekan tombol di bawah ini sampai maksimal untuk melipatgandakan peluang penangkapan ikan.", fontSize = 14.sp, color = Color(0xFF1E3A8A), fontWeight = FontWeight.Medium)
+                        Text("Selamat datang, Manajer! Pelabuhan masih sepi. Langkah pertama: Beli kapal sebanyak yang anggaran kita izinkan! Tekan tombol di bawah ini untuk memborong kapal sampai kas habis dan melipatgandakan peluang penangkapan ikan.", fontSize = 14.sp, color = Color(0xFF1E3A8A), fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(12.dp))
                         Button(
                             onClick = { onTutorialAction(step) },
@@ -60,7 +60,7 @@ fun TutorialOverlay(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Beli 5 Kapal Tambahan", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text("Beli Kapal Maksimal Sesuai Anggaran", color = Color.White, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
