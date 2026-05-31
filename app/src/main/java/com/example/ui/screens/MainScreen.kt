@@ -299,8 +299,12 @@ fun MainScreen(
                 )
             }
 
-            // Scripted tutorial wizard overlay
-            if (state.isTutorialMode && state.tutorialStep > 0) {
+            // Scripted tutorial wizard overlay. Steps 20/21 are pass-through
+            // waiting states (let the sim run and observe) — no overlay, so
+            // the user can dismiss the year-end popup and press Play.
+            val overlayStep = state.tutorialStep
+            val isInteractiveOverlayStep = overlayStep in setOf(1, 2, 3, 4, 5, 15)
+            if (state.isTutorialMode && isInteractiveOverlayStep) {
                 TutorialOverlay(
                     step = state.tutorialStep,
                     currentTick = state.currentTick,
