@@ -22,7 +22,8 @@ import androidx.compose.ui.window.Dialog
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TutorialOverlay(
-    step: Int, // 1 to 5
+    step: Int,
+    currentTick: Int,
     onAdvance: () -> Unit,
     onSubmitMentorText: (String) -> Unit,
     onTutorialAction: (Int) -> Unit = {}
@@ -31,136 +32,84 @@ fun TutorialOverlay(
     val puzzle2Words = listOf("kosong", "bahan bakar", "mahal", "ikan")
     val bank2 = listOf("kosong", "bahan bakar", "ikan", "mahal", "murah")
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.6f))
-            .pointerInput(Unit) { detectTapGestures() }
-    ) {
-        if (step == 1) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E7FF)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("🧑‍✈️ KEPALA NELAYAN", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4338CA))
-                        Text("Selamat datang, Manajer! Pelabuhan masih sepi. Langkah pertama: Beli kapal sebanyak yang anggaran kita izinkan! Tekan tombol di bawah ini untuk memborong kapal sampai kas habis dan melipatgandakan peluang penangkapan ikan.", fontSize = 14.sp, color = Color(0xFF1E3A8A), fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { onTutorialAction(step) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4338CA)),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Beli Kapal Maksimal Sesuai Anggaran", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
+    // Steps that overlay the full screen with a dim background and a tutorial card.
+    val showOverlay = step in setOf(1, 15, 2, 3, 6)
 
-        if (step == 15) {
-            // Intermediate state after buying ship
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 80.dp, start = 16.dp, end = 16.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E7FF)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("🧑‍✈️ KEPALA NELAYAN", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4338CA))
-                        Text("Armada sudah disiapkan! Tekan MULAI (▶) dan biarkan waktu berjalan. Simulasi otomatis di-PAUSE secara berkala tiap akhir tahun sehingga kamu bisa evaluasi.", fontSize = 14.sp, color = Color(0xFF1E3A8A), fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { onTutorialAction(step) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4338CA)),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("▶ MULAI SIMULASI", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
-                    }
+    if (showOverlay) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.55f))
+                .pointerInput(Unit) { detectTapGestures() }
+        ) {
+            when (step) {
+                1 -> {
+                    BottomTutorialCard(
+                        accent = Color(0xFFE0E7FF),
+                        labelColor = Color(0xFF4338CA),
+                        bodyColor = Color(0xFF1E3A8A),
+                        label = "🧑‍✈️ KEPALA NELAYAN",
+                        body = "Selamat datang, Manajer! Kas pelabuhan kita 550 juta rupiah. Mari mulai dengan membeli 5 kapal sebagai armada awal — tekan tombol di bawah ini!",
+                        buttonText = "Beli 5 Kapal (Maksimal Anggaran)",
+                        buttonColor = Color(0xFF4338CA),
+                        onClick = { onTutorialAction(1) }
+                    )
                 }
-            }
-        }
-
-        if (step == 2) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 80.dp, start = 16.dp, end = 16.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFD1FAE5)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("📈 EVALUASI AKHIR TAHUN", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF047857))
-                        Text("Waktu simulasi berjalan sangat cepat. Kamu disarankan maju sedikit demi sedikit: evaluasi penghasilan tiap akhir tahun, tambah kapal jika dirasa perlu, dan amati grafik hijau (Kesejahteraan Nelayan) sampai mereka sangat kaya raya!", fontSize = 14.sp, color = Color(0xFF064E3B), fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { onAdvance() }, // Dismiss this tooltip
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Mengerti, Mari Bereksperimen!", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
-                    }
+                15 -> {
+                    BottomTutorialCard(
+                        accent = Color(0xFFE0E7FF),
+                        labelColor = Color(0xFF4338CA),
+                        bodyColor = Color(0xFF1E3A8A),
+                        label = "🧑‍✈️ KEPALA NELAYAN",
+                        body = "Armada sudah siap! Tekan MULAI untuk menjalankan simulasi. Setiap tahun simulasi akan otomatis di-PAUSE supaya kamu bisa evaluasi.",
+                        buttonText = "▶ MULAI SIMULASI",
+                        buttonColor = Color(0xFF4338CA),
+                        onClick = { onTutorialAction(15) }
+                    )
                 }
-            }
-        }
-
-        if (step == 3) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFEE2E2)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("⚠️ PERINGATAN POPULASI IKAN", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFB91C1C))
-                        Text("Populasi ikan menyusut di bawah 70%! Perahu terlalu banyak menyebabkan 'Overfishing'. Perhatikan Grafik: saat populasi ikan (biru) turun drastis, penghasilan nelayan (hijau) perlahan ikut merosot tajam seiring waktu! Kita tidak bisa lagi menangkap ikan secara maksimal.", fontSize = 14.sp, color = Color(0xFF7F1D1D), fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { onAdvance() },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB91C1C)),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Lanjutkan Pengamatan (Let it run)", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
-                    }
+                2 -> {
+                    val year = currentTick / 12
+                    BottomTutorialCard(
+                        accent = Color(0xFFD1FAE5),
+                        labelColor = Color(0xFF047857),
+                        bodyColor = Color(0xFF064E3B),
+                        label = "📅 AKHIR TAHUN $year — STRATEGI AGRESIF",
+                        body = "Untuk memaksimalkan pendapatan, tambahkan kapal sebanyak yang anggaran kita izinkan tiap akhir tahun. Lihat grafiknya — mari amati apa yang terjadi pada laut.",
+                        buttonText = "Tambah Kapal Maksimal & Lanjut",
+                        buttonColor = Color(0xFF059669),
+                        onClick = { onTutorialAction(2) }
+                    )
+                }
+                3 -> {
+                    BottomTutorialCard(
+                        accent = Color(0xFFFEE2E2),
+                        labelColor = Color(0xFFB91C1C),
+                        bodyColor = Color(0xFF7F1D1D),
+                        label = "⚠️ KRISIS POPULASI IKAN",
+                        body = "Populasi ikan menurun signifikan! Perhatikan grafik: garis biru (ikan) anjlok, dan tak lama setelahnya garis hijau (kesejahteraan nelayan) ikut merosot. Inilah Overfishing — kapal terlalu banyak menangkap lebih cepat dari kemampuan laut memulihkan diri.",
+                        buttonText = "Saya Mengerti, Lanjut",
+                        buttonColor = Color(0xFFB91C1C),
+                        onClick = { onAdvance() }
+                    )
+                }
+                6 -> {
+                    BottomTutorialCard(
+                        accent = Color(0xFFE0E7FF),
+                        labelColor = Color(0xFF1D4ED8),
+                        bodyColor = Color(0xFF1E3A8A),
+                        label = "🎯 MISI SESUNGGUHNYA",
+                        body = "Di sandbox nanti, tugasmu bukan sekadar mengejar profit. Jaga keseimbangan antara populasi laut (jangan sampai kolaps) dan kesejahteraan ekonomi nelayan (upah ≥ UMR). Itulah inti pengelolaan perikanan yang berkelanjutan. Selamat bereksperimen!",
+                        buttonText = "Masuk Sandbox",
+                        buttonColor = Color(0xFF2563EB),
+                        onClick = { onAdvance() }
+                    )
                 }
             }
         }
     }
 
     if (step == 4) {
-        // Puzzle 2: Empty ocean / high opex costs
+        // Puzzle: Empty ocean / high opex costs
         SentencePuzzleDialog(
             badge = "Refleksi · Laut Kosong",
             question = "Kenapa kita tiba-tiba merugi padahal kapalnya banyak?",
@@ -235,9 +184,46 @@ fun TutorialOverlay(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text(text = "Selesaikan Pelatihan", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(text = "Lanjut ke Misi", fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.BottomTutorialCard(
+    accent: Color,
+    labelColor: Color,
+    bodyColor: Color,
+    label: String,
+    body: String,
+    buttonText: String,
+    buttonColor: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = accent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = labelColor)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(body, fontSize = 14.sp, color = bodyColor, fontWeight = FontWeight.Medium, lineHeight = 18.sp)
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(buttonText, color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -253,8 +239,8 @@ fun SentencePuzzleDialog(
     sentenceTemplate: List<String>,
     onSuccess: () -> Unit
 ) {
-    // Current filled slots: index represents blank, value represents chosen word (null if blank)
-    var filledSlots by remember { mutableStateOf(MutableList<String?>(correctOrder.size) { null }) }
+    // Use immutable List<String?> so reassignment always changes content -> Compose recomposes.
+    var filledSlots by remember { mutableStateOf<List<String?>>(List(correctOrder.size) { null }) }
     var resultChecked by remember { mutableStateOf(false) }
     var isCorrectStatus by remember { mutableStateOf(false) }
 
@@ -314,11 +300,6 @@ fun SentencePuzzleDialog(
                                                     if (isCorrectStatus) Color(0xFFD1FAE5) else Color(0xFFFEE2E2)
                                                 } else Color(0xFFDBEAFE)
                                             )
-                                            .clickable(enabled = !resultChecked) {
-                                                // Remove word
-                                                filledSlots[blankIdx] = null
-                                                filledSlots = filledSlots.toMutableList()
-                                            }
                                             .border(
                                                 1.5.dp,
                                                 if (resultChecked) {
@@ -326,6 +307,10 @@ fun SentencePuzzleDialog(
                                                 } else Color(0xFF60A5FA),
                                                 RoundedCornerShape(8.dp)
                                             )
+                                            .clickable(enabled = !resultChecked) {
+                                                // Return word to the bank (new list reference -> recompose)
+                                                filledSlots = filledSlots.toMutableList().apply { this[blankIdx] = null }
+                                            }
                                             .padding(horizontal = 8.dp, vertical = 4.dp)
                                     ) {
                                         Text(
@@ -373,19 +358,18 @@ fun SentencePuzzleDialog(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(if (used) Color(0xFFE2E8F0) else Color.White)
-                                .clickable(enabled = !used && !resultChecked) {
-                                    // Fill the first empty spot
-                                    val emptyIdx = filledSlots.indexOf(null)
-                                    if (emptyIdx != -1) {
-                                        filledSlots[emptyIdx] = word
-                                        filledSlots = filledSlots.toMutableList()
-                                    }
-                                }
                                 .border(
                                     1.5.dp,
                                     if (used) Color(0xFFE2E8F0) else Color(0xFF94A3B8),
                                     RoundedCornerShape(10.dp)
                                 )
+                                .clickable(enabled = !used && !resultChecked) {
+                                    val emptyIdx = filledSlots.indexOf(null)
+                                    if (emptyIdx != -1) {
+                                        // New list reference -> Compose recomposes
+                                        filledSlots = filledSlots.toMutableList().apply { this[emptyIdx] = word }
+                                    }
+                                }
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Text(
@@ -421,7 +405,7 @@ fun SentencePuzzleDialog(
                                 onSuccess()
                             } else {
                                 // Reset for retry
-                                filledSlots = MutableList(correctOrder.size) { null }
+                                filledSlots = List(correctOrder.size) { null }
                                 resultChecked = false
                             }
                         }
