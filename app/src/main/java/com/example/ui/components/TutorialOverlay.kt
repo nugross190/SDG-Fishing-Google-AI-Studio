@@ -32,10 +32,12 @@ fun TutorialOverlay(
     val puzzle2Words = listOf("kosong", "bahan bakar", "mahal", "ikan")
     val bank2 = listOf("kosong", "bahan bakar", "ikan", "mahal", "murah")
 
-    // Steps that overlay the full screen with a dim background and a tutorial card.
-    val showOverlay = step in setOf(1, 15, 2, 3, 6)
+    // Blocking dim overlay used only for the intro briefings (step 1, 15) and
+    // the final reflective cards (3, 6). The year-end card (step 2) is rendered
+    // non-blocking below so the player can buy/sell ships freely before resuming.
+    val showBlockingOverlay = step in setOf(1, 15, 3, 6)
 
-    if (showOverlay) {
+    if (showBlockingOverlay) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -67,19 +69,6 @@ fun TutorialOverlay(
                         onClick = { onTutorialAction(15) }
                     )
                 }
-                2 -> {
-                    val year = currentTick / 12
-                    BottomTutorialCard(
-                        accent = Color(0xFFD1FAE5),
-                        labelColor = Color(0xFF047857),
-                        bodyColor = Color(0xFF064E3B),
-                        label = "📅 AKHIR TAHUN $year — STRATEGI AGRESIF",
-                        body = "Untuk memaksimalkan pendapatan, tambahkan kapal sebanyak yang anggaran kita izinkan tiap akhir tahun. Lihat grafiknya — mari amati apa yang terjadi pada laut.",
-                        buttonText = "Tambah Kapal Maksimal & Lanjut",
-                        buttonColor = Color(0xFF059669),
-                        onClick = { onTutorialAction(2) }
-                    )
-                }
                 3 -> {
                     BottomTutorialCard(
                         accent = Color(0xFFFEE2E2),
@@ -105,6 +94,25 @@ fun TutorialOverlay(
                     )
                 }
             }
+        }
+    }
+
+    // Step 2 (year-end coaching) — non-blocking. Player can still buy/sell ships,
+    // change salary ratio, or press PLAY directly. The card is just a hint with
+    // a shortcut button at the bottom of the screen.
+    if (step == 2) {
+        val year = currentTick / 12
+        Box(modifier = Modifier.fillMaxSize()) {
+            BottomTutorialCard(
+                accent = Color(0xFFD1FAE5),
+                labelColor = Color(0xFF047857),
+                bodyColor = Color(0xFF064E3B),
+                label = "📅 AKHIR TAHUN $year — STRATEGI AGRESIF",
+                body = "Atur ulang armada sesuai strategimu (beli/jual kapal di atas), lalu lanjutkan. Atau pakai tombol pintas untuk menambah kapal maksimal sekaligus melanjutkan simulasi.",
+                buttonText = "Tambah Kapal Maksimal & Lanjut",
+                buttonColor = Color(0xFF059669),
+                onClick = { onTutorialAction(2) }
+            )
         }
     }
 

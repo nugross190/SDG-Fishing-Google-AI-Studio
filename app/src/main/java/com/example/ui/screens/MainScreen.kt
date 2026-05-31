@@ -89,10 +89,18 @@ fun MainScreen(
                 .padding(innerPadding)
                 .background(Color(0xFFF3F4F9))
         ) {
+            // Reserve extra bottom space when a floating year-end / tutorial card
+            // is anchored to the bottom of the screen, so list items underneath
+            // can still be scrolled into view.
+            val bottomReserved = when {
+                state.isYearEndPaused && !state.isTutorialMode -> 320.dp
+                state.isTutorialMode && state.tutorialStep == 2 -> 220.dp
+                else -> 16.dp
+            }
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottomReserved),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Skenario drop banner / detail header
@@ -264,7 +272,11 @@ fun MainScreen(
                     fisherWage = state.lastMonthlyFisherWage,
                     adminWage = state.lastMonthlyAdminWage,
                     rpFormatter = rpFormatter,
-                    onDismiss = { viewModel.dismissYearEndProgress() }
+                    onDismiss = { viewModel.dismissYearEndProgress() },
+                    onResume = {
+                        viewModel.dismissYearEndProgress()
+                        viewModel.startPlaying()
+                    }
                 )
             }
 
@@ -1322,15 +1334,20 @@ fun YearEndSummaryPopup(
     fisherWage: Double,
     adminWage: Double,
     rpFormatter: NumberFormat,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onResume: () -> Unit
 ) {
-    Dialog(onDismissRequest = {}) {
+    // Non-blocking floating summary anchored to the bottom of the screen so the
+    // player can still interact with fleet controls, salary, and PLAY underneath.
+    Box(modifier = Modifier.fillMaxSize()) {
         Card(
             modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(12.dp)
                 .clip(RoundedCornerShape(20.dp)),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A))
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -1339,18 +1356,28 @@ fun YearEndSummaryPopup(
                     )
                     .padding(20.dp)
             ) {
-                Text(
-                    text = "📅 Akhir Tahun $year",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Text(
-                    text = "Atur kembali strategi armada baru anda lalu lanjutkan.",
-                    fontSize = 11.sp,
-                    color = Color(0xFF93C5FD),
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "📅 Akhir Tahun $year",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Atur kembali strategi armada lalu lanjutkan.",
+                            fontSize = 11.sp,
+                            color = Color(0xFF93C5FD)
+                        )
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text(text = "✕ Tutup", color = Color(0xFFBFDBFE), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
 
                 Divider(color = Color(0xFF60A5FA).copy(alpha = 0.5f))
 
@@ -1368,7 +1395,7 @@ fun YearEndSummaryPopup(
                 }
 
                 Button(
-                    onClick = onDismiss,
+                    onClick = onResume,
                     colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                     modifier = Modifier.fillMaxWidth()
                 ) {
